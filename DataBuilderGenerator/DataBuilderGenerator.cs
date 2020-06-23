@@ -163,7 +163,7 @@ namespace DasMulli.DataBuilderGenerator
             }
 
             var nullableContext = semanticModel.GetNullableContext(propertySymbol.Locations[0].SourceSpan.Start);
-            if (nullableContext.HasFlag(NullableContext.Enabled) || nullableContext.HasFlag(NullableContext.AnnotationsEnabled))
+            if (nullableContext.AnnotationsEnabled())
             {
                 return propertySymbol.DeclaringSyntaxReferences.Length != 0
                        && (propertySymbol.DeclaringSyntaxReferences[0].GetSyntax() as PropertyDeclarationSyntax)?.Type
@@ -266,16 +266,11 @@ namespace DasMulli.DataBuilderGenerator
                         originalNamespaceDeclaration.Usings,
                         new SyntaxList<MemberDeclarationSyntax>(builderClass));
 
-                declaration = declaration
-                    .WithLeadingTrivia(
-                        Trivia(NullableDirectiveTrivia(Token(SyntaxKind.EnableKeyword), true))
-                    );
-
                 var compilationUnit = CompilationUnit()
                     .WithExterns(originalCompilationUnit.Externs)
                     .WithUsings(originalCompilationUnit.Usings)
                     .AddMembers(declaration)
-                    .WithLeadingTrivia(Comment(GeneratedByDataBuilderGeneratorPreamble))
+                    .WithLeadingTrivia(Comment(GeneratedByDataBuilderGeneratorPreamble), Trivia(NullableDirectiveTrivia(Token(SyntaxKind.EnableKeyword), true)))
                     .WithTrailingTrivia(CarriageReturnLineFeed)
                     .NormalizeWhitespace();
 
