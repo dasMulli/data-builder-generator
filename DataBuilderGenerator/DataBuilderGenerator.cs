@@ -273,16 +273,12 @@ namespace DasMulli.DataBuilderGenerator
                 var compilationUnit = CompilationUnit()
                     .WithExterns(originalCompilationUnit.Externs)
                     .WithUsings(originalCompilationUnit.Usings)
+                    .AddMembers(declaration)
                     .WithLeadingTrivia(Comment(GeneratedByDataBuilderGeneratorPreamble))
                     .WithTrailingTrivia(CarriageReturnLineFeed)
-                    .AddMembers(declaration)
                     .NormalizeWhitespace();
 
                 compilationUnits.Add((builder.BuilderName + ".cs", compilationUnit));
-
-                //currently the easiest way to debug...
-                var sourceText = compilationUnit.GetText(Encoding.UTF8);
-                System.IO.File.WriteAllText($@"C:\Temp\{builder.BuilderName}.cs", sourceText.ToString());
             }
 
             return compilationUnits;
