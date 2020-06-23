@@ -1,0 +1,54 @@
+name: Build NuGet Package
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Setup .NET Core
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: 3.1.x
+    - name: 'Calculate version numbers'
+      uses: dotnet/nbgv@master
+      with:
+        setAllVars: true
+    - name: Build
+      run: dotnet build --configuration Release -bl:build.binlog
+    - name: Test
+      run: dotnet test --no-restore --no-build --configuration Release --verbosity normal -bl:test.binlog
+    - name: Pack
+      run: dotnet pack --configuration Release -bl:pack.binlog
+    - name: Upload Package Artifacts
+      uses: actions/upload-artifact@v2
+      with:
+        name: packages
+        path: '**/*.*nupkg'
+    - name: Upload Logs
+      uses: actions/upload-artifact@v2
+      if: ${{ always() }}
+      with:
+        name: logs
+        path: '**/*.binlog'
+
+  deploy:
+    needs: [build]
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+    - name: Download Package Artifacts
+      uses: actions/download-artifact@v2
+      with:
+        name: packages
+    - name: Setup .NET Core
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: 3.1.x
+    - name: Push package to NuGet
+      run: dotnet nuget push **/*.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_DEPLOY_KEY }}

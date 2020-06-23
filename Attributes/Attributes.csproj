@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <AssemblyName>DasMulli.DataBuilderGenerator.Attributes</AssemblyName>
+    <RootNamespace>DasMulli.DataBuilderGenerator</RootNamespace>
+    <Description>Support package for DasMulli.DataBuilderGenerator, containing the [GenerateDataBuilder] attribute. Directly reference DasMulli.DataBuilderGenerator for best results.</Description>
+  </PropertyGroup>
+
+</Project>
