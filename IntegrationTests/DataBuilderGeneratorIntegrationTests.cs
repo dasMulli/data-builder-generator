@@ -1,3 +1,4 @@
+using DasMulli.DataBuilderGenerator;
 using FluentAssertions;
 using System;
 using Xunit;
@@ -45,7 +46,7 @@ namespace DataBuilderIntegrationTests
         {
             // Given
             var builder = DefaultPerson.WithId(42);
-
+            
             // When
             var person = builder.Build();
 
@@ -56,5 +57,55 @@ namespace DataBuilderIntegrationTests
         private PersonBuilder DefaultPerson => new PersonBuilder()
             .WithFirstName("Jane")
             .WithLastName("Doe");
+
+        [Fact]
+        public void ItShallIgnoreDefaultValuesEvenNonNullable()
+        {
+            // Given
+            var builder = new AnswerToEveryThingBuilder()
+                .WithAuthor("UnitTest")
+                .WithCreationDate(DateTime.UtcNow);
+
+            // When
+            var answer = builder.Build();
+
+            // Then
+            answer.Value.Should().Be(42);
+            answer.Question.Should().BeNull();
+        }
+
+        [Fact]
+        public void ItShallFailOnUnsetConstructorValueOnly()
+        {
+            // Given
+            var builder = new AnswerToEveryThingBuilder()
+                .WithValue(0)
+                .WithQuestion("test");
+
+            // When
+            Action when = () => builder.Build();
+
+            // Then
+            when.Should().Throw<InvalidOperationException>()
+                .Which.Message.Should().Contain(nameof(AnswerToEveryThing.Author));
+        }
+    }
+
+    [GenerateDataBuilder]
+    public class AnswerToEveryThing
+    {
+        public DateTime CreationDate { get; set; }
+
+        public string Author { get; set; }
+
+        public int Value { get; set; } = 42;
+
+        public string Question { get; set; } = null!;
+
+        public AnswerToEveryThing(DateTime creationDate, string author)
+        {
+            CreationDate = creationDate;
+            Author = author;
+        }
     }
 }

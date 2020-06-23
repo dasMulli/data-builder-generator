@@ -4,6 +4,7 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Text;
 using System.Threading;
 using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
@@ -337,19 +338,6 @@ namespace DasMulli.DataBuilderGenerator
             var objectType = ParseTypeName(builder.Name);
             var buildMethodStatements = new List<StatementSyntax>();
 
-            foreach (var property in builder.Properties)
-            {
-                if (property.IsReferenceType && !property.IsNullable)
-                {
-                    var nullTest = BinaryExpression(SyntaxKind.EqualsExpression, IdentifierName(property.FieldName),
-                        LiteralExpression(SyntaxKind.NullLiteralExpression));
-                    var throwStatement = ThrowStatement(ObjectCreationExpression(ParseTypeName("System.InvalidOperationException"))
-                        .AddArgumentListArguments(Argument(LiteralExpression(SyntaxKind.StringLiteralExpression,
-                            Literal($"No value present for required property '{property.PropertyName}'.")))));
-                    buildMethodStatements.Add(IfStatement(nullTest, throwStatement));
-                }
-            }
-
             var creationExpression = ObjectCreationExpression(objectType);
             var propertiesSetViaConstructor = new List<PropertyToGenerate>();
 
@@ -373,6 +361,17 @@ namespace DasMulli.DataBuilderGenerator
                         arguments[i] = Argument(PropertyAccessAndDefaultingExpression(matchingProperty));
                         propertiesSetViaConstructor.Add(matchingProperty);
                     }
+
+                    foreach (var property in propertiesSetViaConstructor)
+                    {
+                        if (property.IsReferenceType && !property.IsNullable)
+                        {
+                            var throwStatement = ThrowStatement(ObjectCreationExpression(ParseTypeName("System.InvalidOperationException"))
+                                .AddArgumentListArguments(Argument(LiteralExpression(SyntaxKind.StringLiteralExpression,
+                                    Literal($"No value present for required property '{property.PropertyName}'.")))));
+                            buildMethodStatements.Add(IfStatement(NullCheck(IdentifierName(property.FieldName)), throwStatement));
+                        }
+                    }
                 }
 
                 if (blocked)
@@ -393,12 +392,14 @@ namespace DasMulli.DataBuilderGenerator
                     .WithInitializer(EqualsValueClause(creationExpression)))));
 
             buildMethodStatements.AddRange(builder.Properties.Except(propertiesSetViaConstructor).Select(property =>
-                (StatementSyntax)ExpressionStatement(
-                    AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
-                        MemberAccessExpression(SyntaxKind.SimpleMemberAccessExpression,
-                            IdentifierName(buildingInstanceIdentifier),
-                            IdentifierName(property.PropertyName)),
-                        PropertyAccessAndDefaultingExpression(property)))));
+                (StatementSyntax)IfStatement(
+                     PrefixUnaryExpression(SyntaxKind.LogicalNotExpression, ParenthesizedExpression(NullCheck(IdentifierName(property.FieldName)))),
+                     ExpressionStatement(
+                        AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
+                            MemberAccessExpression(SyntaxKind.SimpleMemberAccessExpression,
+                                IdentifierName(buildingInstanceIdentifier),
+                                IdentifierName(property.PropertyName)),
+                            PropertyAccessUnwrappingNullables(property))))));
 
             buildMethodStatements.Add(ReturnStatement(IdentifierName(buildingInstanceIdentifier)));
 
@@ -410,10 +411,18 @@ namespace DasMulli.DataBuilderGenerator
             return true;
         }
 
+        private static ExpressionSyntax NullCheck(ExpressionSyntax expressionToCheck)
+            => IsPatternExpression(expressionToCheck, ConstantPattern(LiteralExpression(SyntaxKind.NullLiteralExpression)));
+
         private static ExpressionSyntax PropertyAccessAndDefaultingExpression(PropertyToGenerate property)
             => property.IsReferenceType
                 ? (ExpressionSyntax)IdentifierName(property.FieldName)
                 : BinaryExpression(SyntaxKind.CoalesceExpression, IdentifierName(property.FieldName), LiteralExpression(SyntaxKind.DefaultLiteralExpression));
+
+        private static ExpressionSyntax PropertyAccessUnwrappingNullables(PropertyToGenerate property)
+            => property.IsReferenceType
+                ? (ExpressionSyntax)IdentifierName(property.FieldName)
+                : MemberAccessExpression(SyntaxKind.SimpleMemberAccessExpression, IdentifierName(property.FieldName), IdentifierName("Value"));
 
         private class BuilderToGenerate
         {

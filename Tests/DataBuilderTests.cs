@@ -41,6 +41,8 @@ public class Address
     public string PostalCode { get; set; }
     public string Country { get; set; }
     public string? Note { get; set; }
+    public string Foo { get; set; } = null!;
+    public int Bar { get; set; } = 3;
 
     public Address(string street, string streetNumber, string? top, string city, string postalCode, string country)
     {
