@@ -2,7 +2,7 @@
 
 Allows to generate data builder patterns for your model classes.
 
-Reference using Visual Studio 2019 16.6 or .NET CLI 3.1.300 or higher and opt into preview language features in your project file:
+Reference using Visual Studio 2019 16.6 or .NET CLI 3.1.500 / 5.0.100 or higher and opt into preview language features in your project file:
 
 ```xml
 <PropertyGroup>
