@@ -42,12 +42,12 @@ Then you can use the generated builder class:
 ```c#
 var martinBuilder = new PersonBuilder()
     .WithFirstName("Martin")
-    .WithMiddleName("Andreas")
+    .WithMiddleNames("Andreas")
     .WithLastName("Ullrich");
 
 var martin = martinBuilder.Build();
 
-var otherMartin = martinBuilder.WithoutMiddleName().WithLastName("Foo").Build();
+var otherMartin = martinBuilder.WithoutMiddleNames().WithLastName("Foo").Build();
 ```
 
 ## Notes
