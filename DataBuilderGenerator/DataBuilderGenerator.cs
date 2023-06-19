@@ -1,4 +1,4 @@
-﻿using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System;
@@ -411,7 +411,7 @@ namespace DasMulli.DataBuilderGenerator
         private static ExpressionSyntax PropertyAccessAndDefaultingExpression(PropertyToGenerate property)
             => property.IsReferenceType
                 ? (ExpressionSyntax)IdentifierName(property.FieldName)
-                : BinaryExpression(SyntaxKind.CoalesceExpression, IdentifierName(property.FieldName), LiteralExpression(SyntaxKind.DefaultLiteralExpression));
+                : BinaryExpression(SyntaxKind.CoalesceExpression, IdentifierName(property.FieldName), SyntaxFactory.DefaultExpression(property.TypeSyntax));
 
         private static ExpressionSyntax PropertyAccessUnwrappingNullables(PropertyToGenerate property)
             => property.IsReferenceType
