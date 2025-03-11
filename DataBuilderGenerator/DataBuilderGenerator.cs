@@ -95,7 +95,7 @@ namespace DasMulli.DataBuilderGenerator
                         generationBlocked = true;
                     }
 
-                    if (typeNode.Modifiers.Any(m => m.Kind() == SyntaxKind.PartialKeyword))
+                    if (typeNode.Modifiers.Any(m => m.IsKind(SyntaxKind.PartialKeyword)))
                     {
                         context.ReportDiagnostic(Diagnostic.Create(GeneratorOnPartialDiagnostic, typeNode.GetLocation(),
                             typeSymbol.Name));
